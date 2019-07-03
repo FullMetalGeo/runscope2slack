@@ -7,8 +7,9 @@ import math
 import os
 
 runscope_apikey = os.environ.get('RUNSCOPE_APIKEY')
-headers = {'Authorization':'Bearer '+runscope_apikey}
+headers = {'Authorization': f"Bearer {runscope_apikey}"}
 runscope_bucket = os.environ.get('RUNSCOPE_BUCKET')
+image_bucket = os.environ.get('IMAGE_BUCKET')
 slacktoken = os.environ.get('SLACK_TOKEN')
 sc = SlackClient(slacktoken)
 
@@ -17,7 +18,7 @@ skiptitles = ['Core WF default domain','Core WF t2medium domain']
 def run():
 
 	# get list of all tests:
-	url = 'https://api.runscope.com/buckets/%s/tests?count=50' % (runscope_bucket)
+	url = f"https://api.runscope.com/buckets/{runscope_bucket}/tests?count=50"
 	r = requests.get(url,headers=headers)
 
 	tests = [{'name': test['name'], 'id':test['id']} for test in r.json()['data']]
@@ -29,9 +30,9 @@ def run():
 		if test['name'] in skiptitles:
 			continue
 		uptimes = []
-		print 'getting uptimes for %s' % test['name'] + ' ' + test['id']
+		print(f"getting uptimes for {test['name']}  {test['id']}")
 		for period in time_periods:
-			url = 'https://api.runscope.com/buckets/%s/tests/%s/metrics?timeframe=%s' % (runscope_bucket, test['id'], period)
+			url = f"https://api.runscope.com/buckets/{runscope_bucket}/tests/{test['id']}/metrics?timeframe={period}"
 			r = requests.get(url,headers=headers)
 			all_uptimes = [d['success_ratio'] for d in r.json()['response_times'] if d['success_ratio']]
 			if len(all_uptimes) > 0:
@@ -69,8 +70,8 @@ def run():
 		r = 0
 		c = 0
 		for dat in sorted(data, key = lambda i: i['label']):
-			print dat['label']
-			print dat[period]
+			print(dat['label'])
+			print(dat[period])
 			if dat[period] < red_threshold:
 				color = RED
 			else:
@@ -79,23 +80,23 @@ def run():
 			d.text((c*boxwidth+10,r*boxheight+10), dat['label'], fill=BLACK)
 			d.text((c*boxwidth+50,r*boxheight+25), str(dat[period]), fill=BLACK)
 			c = c + 1
-			if c >= num_columns: 
+			if c >= num_columns:
 				c = 0
 				r = r + 1
 			if r >= num_rows: r = 0
 
-		img.save('/tmp/'+period + '.png')
+		img.save(f"/tmp/{period}.png")
 
 		# upload image to s3
-		s3key = period+'/' + str(time.time()) + '.png'
+		s3key = f"{period}/{str(time.time())}.png"
 		s3 = boto3.resource('s3')
-		imagedata = open('/tmp/'+period+'.png', 'rb')
-		s3.Bucket('gbdx-service-uptime-images').put_object(Key=s3key, Body=imagedata)
+		imagedata = open(f"/tmp/{period}.png", 'rb')
+		s3.Bucket(image_bucket).put_object(Key=s3key, Body=imagedata)
 
 		# push image to slack
-		image_url = "https://s3.amazonaws.com/gbdx-service-uptime-images/" + s3key
-		attachments = [{"title": "GBDX trailing " + period + " uptime", "image_url": image_url}]
-		sc.api_call("chat.postMessage", channel='#gbdx-ops-daily', text='GBDX trailing '+period+' uptime',attachments=attachments)
+		image_url = f"https://s3.amazonaws.com/{image_bucket}/{s3key}"
+		attachments = [{"title": f"{project} trailing " + period + " uptime", "image_url": image_url}]
+		sc.api_call("chat.postMessage", channel=f"#{slack_channel}", text=f"{project} trailing {period} uptime",attachments=attachments)
 
 if __name__=='__main__':
 	run()
