@@ -6,6 +6,7 @@ from PIL import Image, ImageDraw
 import math
 import os
 
+project = os.environ.get('PROJECT', 'GBDX')
 runscope_apikey = os.environ.get('RUNSCOPE_APIKEY')
 headers = {'Authorization': f"Bearer {runscope_apikey}"}
 runscope_bucket = os.environ.get('RUNSCOPE_BUCKET')
