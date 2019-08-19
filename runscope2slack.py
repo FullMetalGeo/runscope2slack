@@ -89,6 +89,7 @@ def run():
         GREEN = (10,200,10)
         RED = (200,55,55)
         BLACK = (0,0,0)
+        GREY = (128,128,128)
         red_threshold = 99.0  # turn stuff red if less than this many nines
 
         ### Turn stats into an image:
@@ -102,6 +103,8 @@ def run():
                         logger.debug(dat[period])
                         if dat[period] < red_threshold:
                                 color = RED
+                        elif dat[period] == 0:
+                                color = GREY
                         else:
                                 color = GREEN
                         d.rectangle([c*boxwidth,r*boxheight,(1+c)*boxwidth,(1+r)*boxheight],fill=color, outline=BLACK)
