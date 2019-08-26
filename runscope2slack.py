@@ -101,10 +101,10 @@ def run():
                 for dat in sorted(data, key = lambda i: i['label']):
                         logger.debug(dat['label'])
                         logger.debug(dat[period])
-                        if dat[period] < red_threshold:
-                                color = RED
-                        elif dat[period] == 0:
+                        if dat[period] == 0.0:
                                 color = GREY
+                        elif dat[period] < red_threshold:
+                                color = RED
                         else:
                                 color = GREEN
                         d.rectangle([c*boxwidth,r*boxheight,(1+c)*boxwidth,(1+r)*boxheight],fill=color, outline=BLACK)
