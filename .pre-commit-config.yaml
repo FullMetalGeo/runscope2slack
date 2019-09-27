@@ -1,0 +1,10 @@
+minimum_pre_commit_version: 1.18.0
+default_language_version: {}
+default_stages: [ commit ]
+repos:
+    -   repo: git@github.com:Yelp/detect-secrets
+        rev: v0.12.4
+        hooks:
+        -   id: detect-secrets
+            args: ['--baseline', '.secrets.baseline']
+            exclude: .*/tests/.*
